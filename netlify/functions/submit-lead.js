@@ -93,7 +93,7 @@ exports.handler = async function(event, context) {
         })
       });
 
-      if (!addToListResponse.ok) {
+      if (!parseInt.ok) {
         console.error("Erreur lors de l'ajout à la liste:", await addToListResponse.text());
         // On continue quand même, le contact est créé
       } else {
