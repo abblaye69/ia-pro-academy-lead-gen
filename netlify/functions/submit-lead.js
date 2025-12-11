@@ -17,12 +17,19 @@ exports.handler = async function(event, context) {
       };
     }
 
-    // 3. Préparation du payload HubSpot
-    // Séparation Prénom/Nom
+    // 3. Préparation du payload pour l'API de formulaire HubSpot
+    // HubSpot Portal ID: 48538399
+    // Nous allons utiliser l'API de formulaire qui ne nécessite pas d'auth
+    const PORTAL_ID = '48538399';
+    
+    // Séparer le nom en prénom et nom
     const nameParts = name.trim().split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ') || '';
 
+    // Appel direct à HubSpot pour créer un contact
+    const hubspotEndpoint = `https://api.hubapi.com/crm/v3/objects/contacts`;
+    
     const hubspotData = {
       properties: {
         email: email,
@@ -34,8 +41,18 @@ exports.handler = async function(event, context) {
       }
     };
 
-    // 4. Appel API HubSpot pour créer/mettre à jour le contact
-    const response = await fetch('https://api.hubapi.com/crm/v3/objects/contacts', {
+    // Vérifier si la variable d'environnement existe
+    if (!process.env.HUBSPOT_ACCESS_TOKEN) {
+      console.error('HUBSPOT_ACCESS_TOKEN non définie');
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Configuration serveur invalide" })
+      };
+    }
+
+    console.log('Tentative de création de contact pour:', email);
+
+    const response = await fetch(hubspotEndpoint, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
@@ -45,66 +62,27 @@ exports.handler = async function(event, context) {
     });
 
     const responseData = await response.json();
-    let contactId;
+    
+    if (response.ok) {
+      console.log('Contact créé avec succès:', responseData.id);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Lead enregistré avec succès" })
+      };
+    }
 
-    // Gestion du doublon (Contact déjà existant) - Code 409
+    // Gérer le cas du doublon (409)
     if (response.status === 409) {
-      console.log("Contact existant :", email);
-      // Extraire l'ID du contact depuis le message d'erreur
-      contactId = responseData.message.match(/ID: (\d+)/)?.[1];
-      if (!contactId) {
-        // Chercher le contact par email pour récupérer son ID
-        const searchResponse = await fetch(`https://api.hubapi.com/crm/v3/objects/contacts/search`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            filterGroups: [{
-              filters: [{
-                propertyName: "email",
-                operator: "EQ",
-                value: email
-              }]
-            }]
-          })
-        });
-        const searchData = await searchResponse.json();
-        contactId = searchData.results[0]?.id;
-      }
-    } else if (!response.ok) {
-      throw new Error(`Erreur HubSpot: ${JSON.stringify(responseData)}`);
-    } else {
-      contactId = responseData.id;
+      console.log('Contact existe déjà:', email);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ message: "Contact déjà enregistré" })
+      };
     }
 
-    // 5. Ajouter le contact à la liste HubSpot (ID: 9)
-    if (contactId) {
-      const LIST_ID = '9';
-      const addToListResponse = await fetch(`https://api.hubapi.com/contacts/v1/lists/${LIST_ID}/add`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.HUBSPOT_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          vids: [parseInt(contactId)]
-        })
-      });
-
-      if (!parseInt.ok) {
-        console.error("Erreur lors de l'ajout à la liste:", await addToListResponse.text());
-        // On continue quand même, le contact est créé
-      } else {
-        console.log(`Contact ${contactId} ajouté à la liste ${LIST_ID}`);
-      }
-    }
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ message: "Lead enregistré avec succès" })
-    };
+    // Autres erreurs
+    console.error('Erreur HubSpot:', response.status, responseData);
+    throw new Error(`Erreur HubSpot: ${JSON.stringify(responseData)}`);
 
   } catch (error) {
     console.error("Erreur serveur:", error);
