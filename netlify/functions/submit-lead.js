@@ -76,6 +76,25 @@ exports.handler = async function(event, context) {
 
     console.log('Contact created successfully:', responseData);
 
+        // 5. Trigger Make webhook to send welcome email with Kit IA Pro
+    try {
+      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8@hook.eu2.make.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email,
+          name: firstName + ' ' + lastName,
+          firstName: firstName,
+          lastName: lastName,
+          date: new Date().toISOString()
+        })
+      });
+      console.log('Make webhook triggered successfully for:', email);
+    } catch (webhookError) {
+      console.error('Failed to trigger Make webhook:', webhookError);
+      // Don't fail the main request if webhook fails
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ 
