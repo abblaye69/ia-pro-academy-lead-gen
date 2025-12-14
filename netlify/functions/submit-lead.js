@@ -76,7 +76,7 @@ exports.handler = async function(event, context) {
 
     // 5. Trigger Make webhook to send welcome email with Kit IA Pro
     try {
-      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8', {
+      await fetch('https://hook.eu2.make.com/zgck2p2aimtw62te0hy72hxna5zmoiq8', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
