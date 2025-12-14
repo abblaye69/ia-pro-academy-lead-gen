@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8', {const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
   // 1. Allow only POST requests
