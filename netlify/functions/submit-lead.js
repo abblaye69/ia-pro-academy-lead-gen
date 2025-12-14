@@ -1,4 +1,4 @@
-      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8', {const fetch = require('node-fetch');
+const fetch = require('node-fetch');
 
 exports.handler = async function(event, context) {
   // 1. Allow only POST requests
@@ -31,9 +31,7 @@ exports.handler = async function(event, context) {
       `https://api.hsforms.com/submissions/v3/integration/submit/${PORTAL_ID}/${FORM_ID}`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fields: [
             {
@@ -67,18 +65,18 @@ exports.handler = async function(event, context) {
       console.error('HubSpot API error:', responseData);
       return {
         statusCode: hubspotResponse.status,
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           error: "HubSpot API error",
-          details: responseData 
+          details: responseData
         })
       };
     }
 
     console.log('Contact created successfully:', responseData);
 
-        // 5. Trigger Make webhook to send welcome email with Kit IA Pro
+    // 5. Trigger Make webhook to send welcome email with Kit IA Pro
     try {
-      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8@hook.eu2.make.com', {
+      await fetch('https://hook.eu2.make.com/2gck2p2aimtw62te0hy72hxna5zmoiq8', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -97,7 +95,7 @@ exports.handler = async function(event, context) {
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         success: true,
         message: "Lead submitted successfully",
         data: responseData
@@ -108,9 +106,9 @@ exports.handler = async function(event, context) {
     console.error('Error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         error: "Internal server error",
-        message: error.message 
+        message: error.message
       })
     };
   }
